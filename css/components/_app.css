@@ -1,0 +1,72 @@
+.app {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.app__main {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-6);
+  padding: var(--space-4);
+}
+
+@media (min-width: 1024px) {
+  .app__main {
+    grid-template-columns: 1fr 1fr;
+    padding: var(--space-4) var(--space-6);
+  }
+}
+
+/* ── Split view režimy ── */
+.app__main--editor-only .preview,
+.app__main--preview-only .editor,
+.app__main--editor-only .cheatsheet,
+.app__main--preview-only .cheatsheet {
+  display: none !important;
+}
+
+.app__main--editor-only,
+.app__main--preview-only {
+  grid-template-columns: 1fr !important;
+}
+
+.app__main--editor-only .editor,
+.app__main--preview-only .preview {
+  display: flex !important;
+}
+
+/* ── Resizable layout (desktop only) ── */
+@media (min-width: 1024px) {
+  .app__main--resizable {
+    display: flex !important;
+    gap: var(--space-6) !important;
+    padding-left: var(--space-6);
+    padding-right: var(--space-6);
+  }
+
+  .app__main--resizable .editor {
+    width: var(--editor-width, 50%);
+    flex: none !important;
+    min-width: var(--editor-min-width);
+  }
+
+  .app__main--resizable .preview {
+    flex: 1 !important;
+    min-width: var(--editor-min-width);
+  }
+}
+
+/* Mobile: resizable layout becomes stacked */
+@media (max-width: 1023px) {
+  .app__main--resizable {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+  }
+
+  .app__main--resizable .editor,
+  .app__main--resizable .preview {
+    width: 100% !important;
+  }
+}

@@ -1,0 +1,87 @@
+:root {
+  /* ── Colors ── */
+  --color-bg-primary: #0a0a0f;
+  --color-bg-secondary: #0f0f17;
+  --color-bg-tertiary: #13131f;
+  --color-bg-quaternary: #1a1a26;
+  --color-bg-hover: #1e1e30;
+  --color-bg-active: #2a2818;
+
+  --color-border-default: #2a2a40;
+  --color-border-hover: #5a5030;
+  --color-border-focus: #c4a35a;
+
+  --color-text-primary: #f1f1f5;
+  --color-text-secondary: #e2e2f0;
+  --color-text-tertiary: #d0d0e4;
+  --color-text-muted: #a0a0c8;
+  --color-text-dim: #7c7cb5;
+
+  --color-accent: #c4a35a;
+  --color-accent-light: #d4b76a;
+  --color-accent-hover: #e8d4a2;
+
+  /* ── Status Colors ── */
+  --color-success: #2a3a1a;
+  --color-success-text: #a8d08d;
+  --color-error: #4a1a1a;
+  --color-error-text: #e8a0a0;
+  --color-info: #3a3010;
+  --color-info-text: #d4c48a;
+  --color-warning: #4a3a10;
+  --color-warning-text: #e0c870;
+
+  /* ── Typography ── */
+  --font-primary: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', 'Courier New', monospace;
+
+  --font-size-xs: 0.7rem;
+  --font-size-sm: 0.75rem;
+  --font-size-base: 0.8rem;
+  --font-size-md: 0.85rem;
+  --font-size-lg: 0.875rem;
+  --font-size-xl: 1rem;
+  --font-size-2xl: 1.15rem;
+  --font-size-3xl: 1.4rem;
+  --font-size-4xl: 1.875rem;
+
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+
+  --line-height-tight: 1.4;
+  --line-height-normal: 1.65;
+  --line-height-relaxed: 1.75;
+
+  /* ── Spacing ── */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+
+  /* ── Border Radius ── */
+  --radius-sm: 0.3rem;
+  --radius-md: 0.375rem;
+  --radius-lg: 0.5rem;
+  --radius-xl: 0.6rem;
+  --radius-2xl: 0.75rem;
+
+  /* ── Transitions ── */
+  --transition-fast: 0.1s;
+  --transition-normal: 0.15s;
+  --transition-slow: 0.2s;
+
+  /* ── Z-Index ── */
+  --z-overlay: 50;
+  --z-dialog: 90;
+  --z-toast: 100;
+
+  /* ── Layout ── */
+  --header-height: 80px;
+  --toolbar-height: 56px;
+  --editor-min-width: 200px;
+  --divider-width: 6px;
+}
