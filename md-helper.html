@@ -157,13 +157,6 @@
     .btn-undo:hover:not(:disabled) { background: #1e1e30; color: #e0e0f8; border-color: #4444aa; }
     .btn-undo:disabled { opacity: 0.4; cursor: not-allowed; }
 
-    /* ── Word count ── */
-    .word-count {
-      font-size: 0.7rem;
-      color: #7c7cb5;
-      font-weight: 500;
-    }
-
     /* ── Preview kontejner ── */
     #preview {
       background: #0f0f17;
@@ -360,7 +353,7 @@
     /* ── Výška editoru a preview (desktop ≥ 1024px) ── */
     @media (min-width: 1024px) {
       .editor-col, .preview-col {
-        height: calc(100vh - 180px);
+        height: calc(100vh - 200px);
         min-height: 500px;
       }
       #editor {
@@ -411,14 +404,200 @@
       font-size: 1.25rem;
       font-weight: 600;
     }
+
+    /* ── Toast notifikace ── */
+    #toast-container {
+      position: fixed;
+      bottom: 1.5rem;
+      right: 1.5rem;
+      z-index: 100;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      pointer-events: none;
+    }
+    .toast {
+      background: #1e1e30;
+      color: #e0e0f8;
+      border: 1px solid #2a2a50;
+      border-radius: 0.5rem;
+      padding: 0.75rem 1rem;
+      font-size: 0.85rem;
+      font-weight: 500;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      opacity: 0;
+      transform: translateY(10px);
+      transition: opacity 0.3s, transform 0.3s;
+      pointer-events: auto;
+      min-width: 200px;
+    }
+    .toast.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    .toast.success { border-color: #166534; color: #86efac; }
+    .toast.error   { border-color: #7f1d1d; color: #fca5a5; }
+    .toast.info    { border-color: #312e81; color: #a5b4fc; }
+
+    /* ── Split view režimy ── */
+    main.split-editor-only .preview-col,
+    main.split-preview-only .editor-col,
+    main.split-editor-only #cheatsheet-grid,
+    main.split-preview-only #cheatsheet-grid {
+      display: none !important;
+    }
+    main.split-editor-only,
+    main.split-preview-only {
+      grid-template-columns: 1fr !important;
+    }
+    main.split-editor-only .editor-col,
+    main.split-preview-only .preview-col {
+      display: flex !important;
+    }
+
+    /* ── Resizable divider ── */
+    .resize-divider {
+      display: none;
+    }
+    @media (min-width: 1024px) {
+      .resize-divider {
+        display: block;
+        width: 6px;
+        cursor: col-resize;
+        background: transparent;
+        position: relative;
+        flex-shrink: 0;
+        align-self: stretch;
+      }
+      .resize-divider::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: 2px;
+        width: 2px;
+        background: #2a2a40;
+        transition: background 0.2s;
+      }
+      .resize-divider:hover::after,
+      .resize-divider.dragging::after {
+        background: #6366f1;
+      }
+      main.resizable-layout {
+        display: flex !important;
+        gap: 1.5rem !important;
+        padding-left: 1.5rem;
+        padding-right: 1.5rem;
+      }
+      main.resizable-layout .editor-col {
+        width: var(--editor-width, 50%);
+        flex: none !important;
+        min-width: 200px;
+      }
+      main.resizable-layout .preview-col {
+        flex: 1 !important;
+        min-width: 200px;
+      }
+    }
+
+    /* ── Find & Replace dialog ── */
+    #find-replace-dialog {
+      position: fixed;
+      top: 1rem;
+      right: 1rem;
+      z-index: 90;
+      background: #13131f;
+      border: 1px solid #2a2a40;
+      border-radius: 0.75rem;
+      padding: 1rem;
+      width: 320px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+      display: none;
+    }
+    #find-replace-dialog.active {
+      display: block;
+    }
+    #find-replace-dialog input {
+      background: #0f0f17;
+      border: 1px solid #2a2a40;
+      color: #e2e2f0;
+      border-radius: 0.375rem;
+      padding: 0.4rem 0.6rem;
+      font-size: 0.8rem;
+      width: 100%;
+      outline: none;
+      margin-bottom: 0.5rem;
+    }
+    #find-replace-dialog input:focus {
+      border-color: #6366f1;
+    }
+    #find-replace-dialog .fr-buttons {
+      display: flex;
+      gap: 0.4rem;
+      flex-wrap: wrap;
+    }
+    #find-replace-dialog .fr-btn {
+      padding: 0.3rem 0.6rem;
+      font-size: 0.75rem;
+      font-weight: 600;
+      border-radius: 0.375rem;
+      border: 1px solid #2a2a40;
+      background: #1a1a2e;
+      color: #a0a0c8;
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s;
+    }
+    #find-replace-dialog .fr-btn:hover {
+      background: #2a2a50;
+      color: #e0e0f8;
+    }
+    #find-replace-dialog .fr-count {
+      font-size: 0.75rem;
+      color: #7c7cb5;
+      margin-left: auto;
+      align-self: center;
+    }
+    #find-replace-dialog .fr-close {
+      position: absolute;
+      top: 0.5rem;
+      right: 0.6rem;
+      background: none;
+      border: none;
+      color: #7c7cb5;
+      cursor: pointer;
+      font-size: 1rem;
+      line-height: 1;
+    }
+    #find-replace-dialog .fr-close:hover {
+      color: #e0e0f8;
+    }
   </style>
 </head>
 
 <body class="min-h-screen">
 
+  <!-- Toast kontejner -->
+  <div id="toast-container"></div>
+
+  <!-- Find & Replace dialog -->
+  <div id="find-replace-dialog">
+    <button class="fr-close" id="fr-close" title="Zavřít (Esc)">&times;</button>
+    <input type="text" id="fr-find" placeholder="Hledat…" />
+    <input type="text" id="fr-replace" placeholder="Nahradit za…" />
+    <div class="fr-buttons">
+      <button class="fr-btn" id="fr-find-next">Najít další</button>
+      <button class="fr-btn" id="fr-replace-one">Nahradit</button>
+      <button class="fr-btn" id="fr-replace-all">Nahradit vše</button>
+      <span class="fr-count" id="fr-count"></span>
+    </div>
+  </div>
+
   <!-- Drag & drop overlay -->
   <div id="drag-overlay" class="drag-overlay">
-    <span class="drag-overlay-text">Pusť soubor pro otevření</span>
+    <span class="drag-overlay-text">Pusť soubor pro otevření (.md nebo obrázek)</span>
   </div>
 
   <!-- ══════════════════════════════════════════ HEADER ══════════════════════════════════════════ -->
@@ -432,17 +611,21 @@
         <p class="text-sm text-gray-400">Jednoduchý editor Markdownu s živým náhledem</p>
       </div>
     </div>
-    <span class="text-sm text-gray-400 hidden sm:block">Markdown pro začátečníky</span>
+    <div class="flex items-center gap-2 py-1">
+      <button id="btn-view-split" class="toolbar-btn" title="Editor + Náhled">&#9871; Split</button>
+      <button id="btn-view-editor" class="toolbar-btn" title="Pouze editor">&#9998; Edit</button>
+      <button id="btn-view-preview" class="toolbar-btn" title="Pouze náhled">&#128065; View</button>
+    </div>
   </header>
 
   <!-- ══════════════════════════════════════════ MAIN ══════════════════════════════════════════ -->
-  <main class="px-4 sm:px-6 py-5 grid grid-cols-1 lg:grid-cols-2 gap-5">
+  <main id="main-layout" class="px-4 sm:px-6 py-4 grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
 
     <!-- ── Levý sloupec: Editor ── -->
-    <div class="editor-col flex flex-col gap-2 min-w-0">
+    <div class="editor-col flex flex-col gap-2 min-w-0" id="editor-col">
 
       <!-- Toolbar -->
-      <div class="flex flex-wrap gap-1.5 p-2.5 rounded-xl border border-gray-800 bg-gray-900">
+      <div class="flex flex-wrap gap-1.5 p-3 rounded-xl border border-gray-800 bg-gray-900 h-[56px] items-center overflow-hidden">
         <span class="section-label mb-0 self-center mr-1">Editor</span>
         <div class="w-px bg-gray-700 mx-0.5 self-stretch"></div>
 
@@ -490,15 +673,16 @@
         aria-label="Editor Markdownu"
       ></textarea>
 
-      <!-- Word count -->
-      <div class="word-count" id="word-count">0 slov, 0 znaků</div>
     </div>
 
+    <!-- Resizable divider -->
+    <div class="resize-divider" id="resize-divider"></div>
+
     <!-- ── Pravý sloupec: Live preview ── -->
-    <div class="preview-col flex flex-col gap-2 min-w-0">
+    <div class="preview-col flex flex-col gap-2 min-w-0" id="preview-col">
 
       <!-- Akce – stejný box jako toolbar vlevo -->
-      <div class="flex flex-wrap items-center gap-1.5 p-2.5 rounded-xl border border-gray-800 bg-gray-900">
+      <div class="flex flex-wrap items-center gap-1.5 p-3 rounded-xl border border-gray-800 bg-gray-900 h-[56px] overflow-hidden">
         <span class="section-label mb-0 self-center mr-1">Náhled</span>
         <div class="w-px bg-gray-700 mx-0.5 self-stretch"></div>
 
@@ -712,8 +896,23 @@
     const btnReset        = document.getElementById('btn-reset');
     const btnUndo         = document.getElementById('btn-undo');
     const btnRedo         = document.getElementById('btn-redo');
-    const wordCountEl     = document.getElementById('word-count');
     const dragOverlay     = document.getElementById('drag-overlay');
+    const mainLayout      = document.getElementById('main-layout');
+    const editorCol       = document.getElementById('editor-col');
+    const previewCol      = document.getElementById('preview-col');
+    const resizeDivider   = document.getElementById('resize-divider');
+    const btnViewSplit    = document.getElementById('btn-view-split');
+    const btnViewEditor   = document.getElementById('btn-view-editor');
+    const btnViewPreview  = document.getElementById('btn-view-preview');
+    const toastContainer  = document.getElementById('toast-container');
+    const frDialog        = document.getElementById('find-replace-dialog');
+    const frFind          = document.getElementById('fr-find');
+    const frReplace       = document.getElementById('fr-replace');
+    const frFindNext      = document.getElementById('fr-find-next');
+    const frReplaceOne    = document.getElementById('fr-replace-one');
+    const frReplaceAll    = document.getElementById('fr-replace-all');
+    const frCount         = document.getElementById('fr-count');
+    const frClose         = document.getElementById('fr-close');
 
     // === Undo/Redo systém ===
     const undoStack = [];
@@ -743,7 +942,6 @@
       editor.value = state.text;
       editor.setSelectionRange(state.cursor, state.cursor);
       updatePreview();
-      updateWordCount();
       saveToSession();
       isUndoing = false;
       updateUndoRedoButtons();
@@ -760,7 +958,6 @@
       editor.value = state.text;
       editor.setSelectionRange(state.cursor, state.cursor);
       updatePreview();
-      updateWordCount();
       saveToSession();
       isUndoing = false;
       updateUndoRedoButtons();
@@ -826,14 +1023,6 @@ Více info na [Markdown Guide](https://www.markdownguide.org).
 *Smaž tento obsah a začni psát vlastní poznámky!*
 `;
 
-    // === Word / char count ===
-    function updateWordCount() {
-      const text = editor.value.trim();
-      const words = text ? text.split(/\s+/).length : 0;
-      const chars = editor.value.length;
-      wordCountEl.textContent = `${words} slov, ${chars} znaků`;
-    }
-
     // === Toolbar helpers ===
     function insertMarkdown(before, after = '', placeholder = '') {
       saveState();
@@ -855,7 +1044,6 @@ Více info na [Markdown Guide](https://www.markdownguide.org).
       editor.focus();
       editor.setSelectionRange(cursorPos, cursorPos);
       updatePreview();
-      updateWordCount();
     }
 
     function insertLinePrefix(prefix) {
@@ -886,7 +1074,6 @@ Více info na [Markdown Guide](https://www.markdownguide.org).
       editor.focus();
       editor.setSelectionRange(newCursor, newCursor);
       updatePreview();
-      updateWordCount();
     }
 
     // === Toolbar event listeners ===
@@ -951,6 +1138,15 @@ Více info na [Markdown Guide](https://www.markdownguide.org).
           e.preventDefault();
           insertLinePrefix('### ');
           break;
+        case 'f':
+          e.preventDefault();
+          openFindReplace();
+          break;
+        case 'h':
+          e.preventDefault();
+          openFindReplace();
+          frReplace.focus();
+          break;
       }
     });
 
@@ -967,7 +1163,6 @@ Více info na [Markdown Guide](https://www.markdownguide.org).
 
     editor.addEventListener('input', () => {
       updatePreview();
-      updateWordCount();
 
       // Uložit stav pro undo po 1.5s pauze v psaní
       clearTimeout(inputTimeout);
@@ -984,9 +1179,10 @@ Více info na [Markdown Guide](https://www.markdownguide.org).
     let copyFeedbackTimeout = null;
 
     btnCopy.addEventListener('click', async () => {
-      if (copyFeedbackTimeout !== null) return; // ignorovat rychlé dvojkliky
+      if (copyFeedbackTimeout !== null) return;
       try {
         await navigator.clipboard.writeText(editor.value);
+        showToast('Markdown zkopírován do schránky', 'success');
         btnCopy.innerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Zkopírováno`;
         btnCopy.style.color = '#86efac';
         btnCopy.style.borderColor = '#166534';
@@ -997,7 +1193,7 @@ Více info na [Markdown Guide](https://www.markdownguide.org).
           copyFeedbackTimeout = null;
         }, 1800);
       } catch {
-        alert('Kopírování selhalo. Zkus zkopírovat manuálně (Ctrl+A, Ctrl+C).');
+        showToast('Kopírování selhalo. Zkus manuálně (Ctrl+A, Ctrl+C).', 'error');
       }
     });
 
@@ -1061,7 +1257,6 @@ ${DOMPurify.sanitize(marked.parse(editor.value))}
         saveState();
         editor.value = '';
         updatePreview();
-        updateWordCount();
         saveToSession();
         editor.focus();
       }
@@ -1072,7 +1267,6 @@ ${DOMPurify.sanitize(marked.parse(editor.value))}
         saveState();
         editor.value = DEFAULT_CONTENT;
         updatePreview();
-        updateWordCount();
         saveToSession();
         editor.focus();
       }
@@ -1097,43 +1291,92 @@ ${DOMPurify.sanitize(marked.parse(editor.value))}
       const files = e.dataTransfer.files;
       if (files.length === 0) return;
       const file = files[0];
-      if (!file.name.endsWith('.md')) {
-        alert('Prosím, přetáhni pouze soubor s příponou .md');
+      const ext = file.name.split('.').pop().toLowerCase();
+      const imageExts = ['png', 'jpg', 'jpeg', 'gif', 'webp', 'svg', 'bmp'];
+
+      if (imageExts.includes(ext)) {
+        if (file.size > 1024 * 1024) {
+          showToast('Obrázek je větší než 1MB. Zvaž menší velikost.', 'error', 5000);
+        }
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          const base64 = event.target.result;
+          const altText = file.name.replace(/\.[^.]+$/, '');
+          const imageMarkdown = `![${altText}](${base64})`;
+          const pos = editor.selectionStart;
+          saveState();
+          editor.value = editor.value.slice(0, pos) + imageMarkdown + editor.value.slice(pos);
+          editor.focus();
+          editor.setSelectionRange(pos + imageMarkdown.length, pos + imageMarkdown.length);
+          updatePreview();
+          saveToSession();
+          showToast(`Obrázek ${file.name} vložen`, 'success');
+        };
+        reader.readAsDataURL(file);
         return;
       }
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        saveState();
-        editor.value = event.target.result;
-        filenameEl.value = file.name.replace(/\.md$/, '');
-        updatePreview();
-        updateWordCount();
-        saveToSession();
-      };
-      reader.readAsText(file);
+
+      if (ext === 'md') {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          saveState();
+          editor.value = event.target.result;
+          filenameEl.value = file.name.replace(/\.md$/i, '');
+          updatePreview();
+          saveToSession();
+          showToast(`Soubor ${file.name} načten`, 'success');
+        };
+        reader.readAsText(file);
+        return;
+      }
+
+      showToast('Podporované formáty: .md, .png, .jpg, .jpeg, .gif, .webp, .svg', 'error', 4000);
     });
 
-    // === Auto-save do sessionStorage ===
-    const SESSION_KEY = 'md-helper-content';
-    const SESSION_FILENAME_KEY = 'md-helper-filename';
+    // === Storage helpers (localStorage + sessionStorage fallback) ===
+    const STORAGE_KEY = 'md-helper-content';
+    const STORAGE_FILENAME_KEY = 'md-helper-filename';
+    const STORAGE_TIMESTAMP_KEY = 'md-helper-timestamp';
+
+    function getStorageItem(key) {
+      try {
+        const local = localStorage.getItem(key);
+        if (local !== null) return local;
+      } catch (e) { /* localStorage nepřístupný */ }
+      try {
+        return sessionStorage.getItem(key);
+      } catch (e) { /* sessionStorage nepřístupný */ }
+      return null;
+    }
+
+    function setStorageItem(key, value) {
+      try {
+        localStorage.setItem(key, value);
+      } catch (e) {
+        // localStorage plný nebo nepřístupný → fallback na sessionStorage
+        try {
+          sessionStorage.setItem(key, value);
+        } catch (e2) { /* obojí nepřístupné */ }
+      }
+    }
 
     function loadFromSession() {
-      const saved = sessionStorage.getItem(SESSION_KEY);
+      const saved = getStorageItem(STORAGE_KEY);
       if (saved !== null) {
         editor.value = saved;
       } else {
         editor.value = DEFAULT_CONTENT;
       }
-      const savedFilename = sessionStorage.getItem(SESSION_FILENAME_KEY);
+      const savedFilename = getStorageItem(STORAGE_FILENAME_KEY);
       if (savedFilename) filenameEl.value = savedFilename;
     }
 
     function saveToSession() {
-      sessionStorage.setItem(SESSION_KEY, editor.value);
-      sessionStorage.setItem(SESSION_FILENAME_KEY, filenameEl.value);
+      setStorageItem(STORAGE_KEY, editor.value);
+      setStorageItem(STORAGE_FILENAME_KEY, filenameEl.value);
+      setStorageItem(STORAGE_TIMESTAMP_KEY, Date.now().toString());
     }
 
-    editor.addEventListener('input', saveToSession);
     filenameEl.addEventListener('input', saveToSession);
 
     // === Cheat sheet copy ===
@@ -1161,10 +1404,261 @@ ${DOMPurify.sanitize(marked.parse(editor.value))}
       });
     });
 
+    // === Toast notifikace ===
+    const MAX_TOASTS = 5;
+    function showToast(message, type = 'info', duration = 3000) {
+      // Omezit počet toastů
+      while (toastContainer.children.length >= MAX_TOASTS) {
+        toastContainer.firstChild.remove();
+      }
+      const toast = document.createElement('div');
+      toast.className = `toast ${type}`;
+      let icon = '';
+      if (type === 'success') icon = '\u2713 ';
+      else if (type === 'error') icon = '\u2717 ';
+      else icon = '\u2139 ';
+      toast.textContent = icon + message;
+      toastContainer.appendChild(toast);
+      requestAnimationFrame(() => toast.classList.add('show'));
+      setTimeout(() => {
+        toast.classList.remove('show');
+        setTimeout(() => toast.remove(), 300);
+      }, duration);
+    }
+
+    // === Split view přepínač ===
+    const SPLIT_KEY = 'md-helper-split';
+    let currentSplit = localStorage.getItem(SPLIT_KEY) || 'split';
+
+    function applySplit(mode) {
+      currentSplit = mode;
+      mainLayout.classList.remove('split-editor-only', 'split-preview-only', 'resizable-layout');
+      btnViewSplit.classList.remove('bg-indigo-600', 'text-white', 'border-indigo-500');
+      btnViewEditor.classList.remove('bg-indigo-600', 'text-white', 'border-indigo-500');
+      btnViewPreview.classList.remove('bg-indigo-600', 'text-white', 'border-indigo-500');
+
+      if (mode === 'editor') {
+        mainLayout.classList.add('split-editor-only');
+        btnViewEditor.classList.add('bg-indigo-600', 'text-white', 'border-indigo-500');
+      } else if (mode === 'preview') {
+        mainLayout.classList.add('split-preview-only');
+        btnViewPreview.classList.add('bg-indigo-600', 'text-white', 'border-indigo-500');
+      } else {
+        mainLayout.classList.add('resizable-layout');
+        btnViewSplit.classList.add('bg-indigo-600', 'text-white', 'border-indigo-500');
+        loadDividerWidth();
+      }
+      localStorage.setItem(SPLIT_KEY, mode);
+    }
+
+    btnViewSplit.addEventListener('click', () => applySplit('split'));
+    btnViewEditor.addEventListener('click', () => applySplit('editor'));
+    btnViewPreview.addEventListener('click', () => applySplit('preview'));
+
+    // === Resizable divider ===
+    const DIVIDER_WIDTH_KEY = 'md-helper-divider-width';
+    let isDraggingDivider = false;
+
+    function loadDividerWidth() {
+      const saved = localStorage.getItem(DIVIDER_WIDTH_KEY);
+      if (saved) {
+        mainLayout.style.setProperty('--editor-width', saved);
+      }
+    }
+
+    resizeDivider.addEventListener('mousedown', (e) => {
+      isDraggingDivider = true;
+      resizeDivider.classList.add('dragging');
+      document.body.style.cursor = 'col-resize';
+      document.body.style.userSelect = 'none';
+      e.preventDefault();
+    });
+
+    document.addEventListener('mousemove', (e) => {
+      if (!isDraggingDivider) return;
+      const rect = mainLayout.getBoundingClientRect();
+      const padding = 48; // px-6 = 1.5rem each side
+      const width = ((e.clientX - rect.left - padding / 2) / (rect.width - padding)) * 100;
+      const clamped = Math.max(20, Math.min(80, width));
+      const widthStr = clamped + '%';
+      mainLayout.style.setProperty('--editor-width', widthStr);
+      // Okamžité uložení pro případ neočekávaného zavření
+      try {
+        localStorage.setItem(DIVIDER_WIDTH_KEY, widthStr);
+      } catch (e) { /* ignore */ }
+    });
+
+    document.addEventListener('mouseup', () => {
+      if (!isDraggingDivider) return;
+      isDraggingDivider = false;
+      resizeDivider.classList.remove('dragging');
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+    });
+
+    // === Find & Replace ===
+    let findMatches = [];
+    let findIndex = -1;
+    let lastFindQuery = '';
+
+    function openFindReplace() {
+      frDialog.classList.add('active');
+      frFind.focus();
+      frFind.select();
+    }
+    function closeFindReplace() {
+      frDialog.classList.remove('active');
+      frCount.textContent = '';
+      findMatches = [];
+      findIndex = -1;
+      editor.focus();
+    }
+
+    function updateFindCount() {
+      if (findMatches.length > 0) {
+        frCount.textContent = `${findIndex + 1} / ${findMatches.length}`;
+      } else if (lastFindQuery) {
+        frCount.textContent = '0 / 0';
+      } else {
+        frCount.textContent = '';
+      }
+    }
+
+    function findAll(query) {
+      findMatches = [];
+      findIndex = -1;
+      lastFindQuery = query;
+      if (!query || !query.trim()) {
+        updateFindCount();
+        return;
+      }
+      const text = editor.value;
+      try {
+        const regex = new RegExp(escapeRegExp(query), 'gi');
+        let match;
+        while ((match = regex.exec(text)) !== null) {
+          findMatches.push({ start: match.index, end: match.index + match[0].length });
+        }
+        if (findMatches.length > 0) {
+          findIndex = 0;
+          selectMatch(0);
+        }
+      } catch (e) {
+        // Invalid regex, ignore
+      }
+      updateFindCount();
+    }
+
+    function escapeRegExp(string) {
+      return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    }
+
+    function selectMatch(idx) {
+      if (idx < 0 || idx >= findMatches.length) return;
+      findIndex = idx;
+      const m = findMatches[idx];
+      editor.focus();
+      editor.setSelectionRange(m.start, m.end);
+      updateFindCount();
+    }
+
+    function findNext() {
+      if (findMatches.length === 0) {
+        findAll(frFind.value);
+        return;
+      }
+      const next = (findIndex + 1) % findMatches.length;
+      selectMatch(next);
+    }
+
+    function replaceOne() {
+      if (findMatches.length === 0 || findIndex < 0) {
+        findAll(frFind.value);
+        return;
+      }
+      const m = findMatches[findIndex];
+      const replaceText = frReplace.value;
+      const before = editor.value.slice(0, m.start);
+      const after = editor.value.slice(m.end);
+      saveState();
+      editor.value = before + replaceText + after;
+      const diff = replaceText.length - (m.end - m.start);
+      // Adjust remaining matches
+      for (let i = findIndex + 1; i < findMatches.length; i++) {
+        findMatches[i].start += diff;
+        findMatches[i].end += diff;
+      }
+      findMatches.splice(findIndex, 1);
+      if (findMatches.length > 0) {
+        findIndex = Math.min(findIndex, findMatches.length - 1);
+        selectMatch(findIndex);
+      } else {
+        findIndex = -1;
+      }
+      updatePreview();
+      saveToSession();
+      updateFindCount();
+    }
+
+    function replaceAll() {
+      const query = frFind.value;
+      const replaceText = frReplace.value;
+      if (!query) return;
+      saveState();
+      const regex = new RegExp(escapeRegExp(query), 'gi');
+      const count = (editor.value.match(regex) || []).length;
+      editor.value = editor.value.replace(regex, replaceText);
+      findMatches = [];
+      findIndex = -1;
+      updatePreview();
+      saveToSession();
+      frCount.textContent = `Nahrazeno: ${count}`;
+      showToast(`Nahrazeno ${count} výskytů`, 'success');
+    }
+
+    frFind.addEventListener('input', () => findAll(frFind.value));
+    frFind.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        findNext();
+      }
+    });
+    frReplace.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        replaceOne();
+      }
+    });
+    frFindNext.addEventListener('click', findNext);
+    frReplaceOne.addEventListener('click', replaceOne);
+    frReplaceAll.addEventListener('click', replaceAll);
+    frClose.addEventListener('click', closeFindReplace);
+
+    frDialog.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        closeFindReplace();
+      }
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && frDialog.classList.contains('active')) {
+        closeFindReplace();
+      }
+    });
+
+    // === Ochrana před ztrátou dat ===
+    window.addEventListener('beforeunload', (e) => {
+      if (editor.value !== DEFAULT_CONTENT && editor.value.trim() !== '') {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    });
+
     // === Init ===
     loadFromSession();
     updatePreview();
-    updateWordCount();
+    applySplit(currentSplit);
 
   </script>
 
