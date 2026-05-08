@@ -74,6 +74,8 @@
       transition: background 0.15s, color 0.15s, border-color 0.15s, transform 0.1s;
       white-space: nowrap;
       user-select: none;
+      min-height: 28px;
+      min-width: 28px;
     }
     .toolbar-btn:hover {
       background: #1e1e30;
@@ -84,6 +86,10 @@
       background: #2a2a50;
       color: #ffffff;
       transform: scale(0.96);
+    }
+    .toolbar-btn:focus-visible {
+      outline: 2px solid #6366f1;
+      outline-offset: 2px;
     }
 
     /* ── Akční tlačítka ── */
@@ -101,6 +107,10 @@
       white-space: nowrap;
     }
     .action-btn:active { transform: scale(0.97); }
+    .action-btn:focus-visible {
+      outline: 2px solid #6366f1;
+      outline-offset: 2px;
+    }
 
     .btn-copy {
       background: #1e293b;
@@ -116,12 +126,42 @@
     }
     .btn-download:hover { background: #262070; color: #c7d2fe; border-color: #4338ca; }
 
+    .btn-export-html {
+      background: #0f1a1a;
+      color: #6ee7b7;
+      border: 1px solid #134e4a;
+    }
+    .btn-export-html:hover { background: #0f2420; color: #a7f3d0; border-color: #047857; }
+
+    .btn-clear-editor {
+      background: #1a1200;
+      color: #fbbf24;
+      border: 1px solid #78350f;
+    }
+    .btn-clear-editor:hover { background: #2a1e00; color: #fcd34d; border-color: #b45309; }
+
     .btn-reset {
       background: #1a0a0a;
       color: #f87171;
       border: 1px solid #7f1d1d;
     }
     .btn-reset:hover { background: #2a0f0f; color: #fca5a5; border-color: #991b1b; }
+
+    /* ── Undo/Redo tlačítka ── */
+    .btn-undo {
+      background: #13131f;
+      color: #a0a0c8;
+      border: 1px solid #2a2a40;
+    }
+    .btn-undo:hover:not(:disabled) { background: #1e1e30; color: #e0e0f8; border-color: #4444aa; }
+    .btn-undo:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    /* ── Word count ── */
+    .word-count {
+      font-size: 0.7rem;
+      color: #7c7cb5;
+      font-weight: 500;
+    }
 
     /* ── Preview kontejner ── */
     #preview {
@@ -312,11 +352,11 @@
       font-weight: 600;
       letter-spacing: 0.1em;
       text-transform: uppercase;
-      color: #4a4a80;
+      color: #7c7cb5;
       margin-bottom: 0.5rem;
     }
 
-    /* ── Výška editoru a preview (desktop) ── */
+    /* ── Výška editoru a preview (desktop ≥ 1024px) ── */
     @media (min-width: 1024px) {
       .editor-col, .preview-col {
         height: calc(100vh - 180px);
@@ -324,93 +364,121 @@
       }
       #editor {
         height: 100%;
+        flex: 1;
       }
       #preview {
         height: 100%;
+        flex: 1;
       }
     }
 
-    /* ── Výška editoru a preview (mobil) ── */
+    /* ── Stacked layout (< 1024px) ── */
     @media (max-width: 1023px) {
-      #editor { height: 360px; }
-      #preview { height: 360px; }
+      #editor {
+        height: 50vh;
+        min-height: 320px;
+      }
+      #preview {
+        height: 50vh;
+        min-height: 320px;
+      }
+      .toolbar-btn {
+        font-size: 0.72rem;
+        padding: 0.25rem 0.45rem;
+      }
+    }
+
+    /* ── Drag & drop overlay ── */
+    .drag-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(10, 10, 15, 0.85);
+      border: 3px dashed #6366f1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 50;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+    .drag-overlay.active {
+      opacity: 1;
+    }
+    .drag-overlay-text {
+      color: #a5b4fc;
+      font-size: 1.25rem;
+      font-weight: 600;
     }
   </style>
 </head>
 
 <body class="min-h-screen">
 
+  <!-- Drag & drop overlay -->
+  <div id="drag-overlay" class="drag-overlay">
+    <span class="drag-overlay-text">Pusť soubor pro otevření</span>
+  </div>
+
   <!-- ══════════════════════════════════════════ HEADER ══════════════════════════════════════════ -->
   <header class="border-b border-gray-800 bg-gray-950 px-6 py-4 flex items-center justify-between">
     <div class="flex items-center gap-3">
-      <!-- Logo/ikona -->
       <div class="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
         M
       </div>
       <div>
         <h1 class="text-lg font-bold text-white tracking-tight">MD Helper</h1>
-        <p class="text-sm text-gray-500">Jednoduchý editor Markdownu s živým náhledem</p>
+        <p class="text-sm text-gray-400">Jednoduchý editor Markdownu s živým náhledem</p>
       </div>
     </div>
-    <span class="text-sm text-gray-700 hidden sm:block">Markdown pro začátečníky</span>
+    <span class="text-sm text-gray-400 hidden sm:block">Markdown pro začátečníky</span>
   </header>
 
   <!-- ══════════════════════════════════════════ MAIN ══════════════════════════════════════════ -->
-  <main class="px-4 sm:px-6 py-5 lg:grid lg:grid-cols-2 lg:gap-5 flex flex-col gap-5">
+  <main class="px-4 sm:px-6 py-5 grid grid-cols-1 lg:grid-cols-2 gap-5">
 
     <!-- ── Levý sloupec: Editor ── -->
     <div class="editor-col flex flex-col gap-2 min-w-0">
 
-      <!-- Popis sloupce -->
-      <div class="section-label">Editor</div>
-
       <!-- Toolbar -->
       <div class="flex flex-wrap gap-1.5 p-2.5 rounded-xl border border-gray-800 bg-gray-900">
-        <!-- Nadpisy -->
-        <button class="toolbar-btn" data-action="h1" title="Nadpis 1">H1</button>
-        <button class="toolbar-btn" data-action="h2" title="Nadpis 2">H2</button>
+        <span class="section-label mb-0 self-center mr-1">Editor</span>
+        <div class="w-px bg-gray-700 mx-0.5 self-stretch"></div>
+
+        <button class="toolbar-btn" data-action="h1" title="Nadpis 1 (Ctrl+1)">H1</button>
+        <button class="toolbar-btn" data-action="h2" title="Nadpis 2 (Ctrl+2)">H2</button>
+        <button class="toolbar-btn" data-action="h3" title="Nadpis 3 (Ctrl+3)">H3</button>
 
         <div class="w-px bg-gray-700 mx-0.5 self-stretch"></div>
 
-        <!-- Formátování textu -->
-        <button class="toolbar-btn" data-action="bold" title="Tučný text">
+        <button class="toolbar-btn" data-action="bold" title="Tučný text (Ctrl+B)">
           <strong>B</strong>
         </button>
-        <button class="toolbar-btn italic" data-action="italic" title="Kurzíva">
+        <button class="toolbar-btn italic" data-action="italic" title="Kurzíva (Ctrl+I)">
           <em>I</em>
         </button>
 
         <div class="w-px bg-gray-700 mx-0.5 self-stretch"></div>
 
-        <!-- Seznamy -->
-        <button class="toolbar-btn" data-action="bullet" title="Odrážkový seznam">
-          &#8226; List
-        </button>
-        <button class="toolbar-btn" data-action="numbered" title="Číslovaný seznam">
-          1. List
-        </button>
-        <button class="toolbar-btn" data-action="checklist" title="Checklist / To-do">
-          &#9744; Check
-        </button>
+        <button class="toolbar-btn" data-action="bullet" title="Odrážkový seznam">&#8226; List</button>
+        <button class="toolbar-btn" data-action="numbered" title="Číslovaný seznam">1. List</button>
+        <button class="toolbar-btn" data-action="checklist" title="Checklist / To-do">&#9744; Check</button>
 
         <div class="w-px bg-gray-700 mx-0.5 self-stretch"></div>
 
-        <!-- Ostatní -->
-        <button class="toolbar-btn" data-action="link" title="Odkaz">
-          &#128279; Link
-        </button>
-        <button class="toolbar-btn" data-action="inlinecode" title="Inline kód">
-          `kód`
-        </button>
-        <button class="toolbar-btn" data-action="codeblock" title="Blok kódu">
-          &#171;&#160;&#187;
-        </button>
-        <button class="toolbar-btn" data-action="table" title="Tabulka">
-          &#9776; Table
-        </button>
+        <button class="toolbar-btn" data-action="link" title="Odkaz (Ctrl+K)">&#128279; Link</button>
+        <button class="toolbar-btn" data-action="inlinecode" title="Inline kód">`kód`</button>
+        <button class="toolbar-btn" data-action="codeblock" title="Blok kódu">&#171;&#160;&#187;</button>
+        <button class="toolbar-btn" data-action="table" title="Tabulka">&#9776; Table</button>
+
+        <div class="w-px bg-gray-700 mx-0.5 self-stretch"></div>
+
+        <button id="btn-undo" class="toolbar-btn btn-undo" title="Zpět (Ctrl+Z)" disabled>&#8617; Zpět</button>
+        <button id="btn-redo" class="toolbar-btn btn-undo" title="Znovu (Ctrl+Y / Ctrl+Shift+Z)" disabled>&#8618; Znovu</button>
       </div>
 
       <!-- Textarea (editor) -->
+      <label for="editor" class="sr-only">Editor Markdownu</label>
       <textarea
         id="editor"
         class="w-full rounded-xl flex-1 p-4"
@@ -418,20 +486,29 @@
         spellcheck="false"
         autocorrect="off"
         autocapitalize="off"
+        aria-label="Editor Markdownu"
       ></textarea>
 
-      <!-- Akce pod editorem -->
-      <div class="flex items-center gap-2 flex-wrap">
-        <!-- Název souboru -->
-        <div class="flex items-center gap-1.5 text-xs text-gray-500">
-          <span class="hidden sm:inline">Soubor:</span>
-          <input id="filename" type="text" value="note" placeholder="název" maxlength="64" />
-          <span class="text-gray-600">.md</span>
+      <!-- Word count -->
+      <div class="word-count" id="word-count">0 slov, 0 znaků</div>
+    </div>
+
+    <!-- ── Pravý sloupec: Live preview ── -->
+    <div class="preview-col flex flex-col gap-2 min-w-0">
+
+      <!-- Akce – stejný box jako toolbar vlevo -->
+      <div class="flex flex-wrap items-center gap-1.5 p-2.5 rounded-xl border border-gray-800 bg-gray-900">
+        <span class="section-label mb-0 self-center mr-1">Náhled</span>
+        <div class="w-px bg-gray-700 mx-0.5 self-stretch"></div>
+
+        <div class="flex items-center gap-1.5 text-xs text-gray-400">
+          <label for="filename" class="hidden sm:inline">Soubor:</label>
+          <input id="filename" type="text" value="note" placeholder="název" maxlength="64" aria-label="Název souboru" />
+          <span class="text-gray-400">.md</span>
         </div>
 
         <div class="flex-1"></div>
 
-        <!-- Tlačítka -->
         <button id="btn-copy" class="action-btn btn-copy" title="Zkopírovat Markdown do schránky">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
           Kopírovat
@@ -440,16 +517,21 @@
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
           Stáhnout
         </button>
-        <button id="btn-reset" class="action-btn btn-reset" title="Smazat obsah editoru">
+        <button id="btn-export-html" class="action-btn btn-export-html" title="Exportovat jako HTML">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+          HTML
+        </button>
+        <button id="btn-clear-editor" class="action-btn btn-clear-editor" title="Okamžitě vymaže celý obsah editoru">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+          Smazat
+        </button>
+        <button id="btn-reset" class="action-btn btn-reset" title="Obnovit výchozí ukázkový obsah">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.95"/></svg>
           Reset
         </button>
       </div>
-    </div>
 
-    <!-- ── Pravý sloupec: Live preview ── -->
-    <div class="preview-col flex flex-col gap-2 min-w-0">
-      <div class="section-label">Náhled</div>
+      <!-- Live preview -->
       <div id="preview" class="rounded-xl flex-1 px-5 py-4 overflow-y-auto"></div>
     </div>
 
@@ -460,77 +542,72 @@
 
     <div class="border-t border-gray-800 pt-7 mb-5">
       <h2 class="text-base font-bold text-white mb-1">Markdown cheat sheet</h2>
-      <p class="text-xs text-gray-500">Rychlý přehled syntaxe — klikni na syntaxi pro zkopírování.</p>
+      <p class="text-xs text-gray-400">Rychlý přehled syntaxe — klikni na syntaxi pro zkopírování.</p>
     </div>
 
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3" id="cheatsheet-grid">
 
-      <!-- Nadpis H1 -->
       <div class="cheat-card">
         <div class="flex items-center justify-between mb-2">
           <span class="text-xs font-semibold text-indigo-400">Nadpis H1</span>
-          <span class="text-xs text-gray-600">heading</span>
+          <span class="text-xs text-gray-400">heading</span>
         </div>
-        <code class="cheat-syntax cursor-pointer" title="Klikni pro kopírování" data-copy="# Nadpis"># Nadpis</code>
+        <code class="cheat-syntax cursor-pointer" title="Klikni pro kopírování nebo stiskni Enter" tabindex="0" role="button" aria-label="Kopírovat syntaxi" data-copy="# Nadpis"># Nadpis</code>
         <p class="text-xs text-gray-400 mt-2">Hlavní nadpis stránky nebo dokumentu. Používej jen jednou.</p>
         <div class="mt-3 pt-2 border-t border-gray-800">
-          <p class="text-xs text-gray-600 mb-1">Výsledek:</p>
+          <p class="text-xs text-gray-400 mb-1">Výsledek:</p>
           <span class="text-base font-bold text-white">Nadpis</span>
         </div>
       </div>
 
-      <!-- Nadpis H2 -->
       <div class="cheat-card">
         <div class="flex items-center justify-between mb-2">
           <span class="text-xs font-semibold text-indigo-400">Nadpis H2</span>
-          <span class="text-xs text-gray-600">heading</span>
+          <span class="text-xs text-gray-400">heading</span>
         </div>
-        <code class="cheat-syntax cursor-pointer" title="Klikni pro kopírování" data-copy="## Podnadpis">## Podnadpis</code>
+        <code class="cheat-syntax cursor-pointer" title="Klikni pro kopírování nebo stiskni Enter" tabindex="0" role="button" aria-label="Kopírovat syntaxi" data-copy="## Podnadpis">## Podnadpis</code>
         <p class="text-xs text-gray-400 mt-2">Nadpis sekce dokumentu. Pomáhá strukturovat obsah do částí.</p>
         <div class="mt-3 pt-2 border-t border-gray-800">
-          <p class="text-xs text-gray-600 mb-1">Výsledek:</p>
+          <p class="text-xs text-gray-400 mb-1">Výsledek:</p>
           <span class="text-sm font-semibold text-gray-200">Podnadpis</span>
         </div>
       </div>
 
-      <!-- Tučný text -->
       <div class="cheat-card">
         <div class="flex items-center justify-between mb-2">
           <span class="text-xs font-semibold text-indigo-400">Tučný text</span>
-          <span class="text-xs text-gray-600">emphasis</span>
+          <span class="text-xs text-gray-400">emphasis</span>
         </div>
-        <code class="cheat-syntax cursor-pointer" title="Klikni pro kopírování" data-copy="**tučný text**">**tučný text**</code>
+        <code class="cheat-syntax cursor-pointer" title="Klikni pro kopírování nebo stiskni Enter" tabindex="0" role="button" aria-label="Kopírovat syntaxi" data-copy="**tučný text**">**tučný text**</code>
         <p class="text-xs text-gray-400 mt-2">Zdůraznění důležitého textu. Obal text dvěma hvězdičkami.</p>
         <div class="mt-3 pt-2 border-t border-gray-800">
-          <p class="text-xs text-gray-600 mb-1">Výsledek:</p>
+          <p class="text-xs text-gray-400 mb-1">Výsledek:</p>
           <span class="text-sm font-bold text-white">tučný text</span>
         </div>
       </div>
 
-      <!-- Kurzíva -->
       <div class="cheat-card">
         <div class="flex items-center justify-between mb-2">
           <span class="text-xs font-semibold text-indigo-400">Kurzíva</span>
-          <span class="text-xs text-gray-600">emphasis</span>
+          <span class="text-xs text-gray-400">emphasis</span>
         </div>
-        <code class="cheat-syntax cursor-pointer" title="Klikni pro kopírování" data-copy="_kurzíva_">_kurzíva_</code>
+        <code class="cheat-syntax cursor-pointer" title="Klikni pro kopírování nebo stiskni Enter" tabindex="0" role="button" aria-label="Kopírovat syntaxi" data-copy="_kurzíva_">_kurzíva_</code>
         <p class="text-xs text-gray-400 mt-2">Jemné zdůraznění. Obal text podtržítky nebo hvězdičkami.</p>
         <div class="mt-3 pt-2 border-t border-gray-800">
-          <p class="text-xs text-gray-600 mb-1">Výsledek:</p>
+          <p class="text-xs text-gray-400 mb-1">Výsledek:</p>
           <span class="text-sm italic text-gray-300">kurzíva</span>
         </div>
       </div>
 
-      <!-- Odrážkový seznam -->
       <div class="cheat-card">
         <div class="flex items-center justify-between mb-2">
           <span class="text-xs font-semibold text-indigo-400">Odrážkový seznam</span>
-          <span class="text-xs text-gray-600">list</span>
+          <span class="text-xs text-gray-400">list</span>
         </div>
-        <code class="cheat-syntax cursor-pointer" title="Klikni pro kopírování" data-copy="- Položka A&#10;- Položka B">- Položka A<br>- Položka B</code>
+        <code class="cheat-syntax cursor-pointer" title="Klikni pro kopírování nebo stiskni Enter" tabindex="0" role="button" aria-label="Kopírovat syntaxi" data-copy="- Položka A&#10;- Položka B">- Položka A<br>- Položka B</code>
         <p class="text-xs text-gray-400 mt-2">Neseřazený výčet položek. Každá řádka začíná pomlčkou a mezerou.</p>
         <div class="mt-3 pt-2 border-t border-gray-800">
-          <p class="text-xs text-gray-600 mb-1">Výsledek:</p>
+          <p class="text-xs text-gray-400 mb-1">Výsledek:</p>
           <ul class="text-xs text-gray-300 list-disc list-inside space-y-0.5">
             <li>Položka A</li>
             <li>Položka B</li>
@@ -538,16 +615,15 @@
         </div>
       </div>
 
-      <!-- Checklist -->
       <div class="cheat-card">
         <div class="flex items-center justify-between mb-2">
           <span class="text-xs font-semibold text-indigo-400">Checklist</span>
-          <span class="text-xs text-gray-600">task list</span>
+          <span class="text-xs text-gray-400">task list</span>
         </div>
-        <code class="cheat-syntax cursor-pointer" title="Klikni pro kopírování" data-copy="- [ ] Splnit&#10;- [x] Hotovo">- [ ] Splnit<br>- [x] Hotovo</code>
+        <code class="cheat-syntax cursor-pointer" title="Klikni pro kopírování nebo stiskni Enter" tabindex="0" role="button" aria-label="Kopírovat syntaxi" data-copy="- [ ] Splnit&#10;- [x] Hotovo">- [ ] Splnit<br>- [x] Hotovo</code>
         <p class="text-xs text-gray-400 mt-2">To-do seznam se zaškrtávacími políčky. <code class="text-purple-400 bg-transparent border-0 p-0">[x]</code> = splněno.</p>
         <div class="mt-3 pt-2 border-t border-gray-800">
-          <p class="text-xs text-gray-600 mb-1">Výsledek:</p>
+          <p class="text-xs text-gray-400 mb-1">Výsledek:</p>
           <div class="text-xs text-gray-300 space-y-0.5">
             <div><input type="checkbox" disabled class="mr-1 accent-indigo-500"> Splnit</div>
             <div><input type="checkbox" checked disabled class="mr-1 accent-indigo-500"> Hotovo</div>
@@ -555,41 +631,38 @@
         </div>
       </div>
 
-      <!-- Odkaz -->
       <div class="cheat-card">
         <div class="flex items-center justify-between mb-2">
           <span class="text-xs font-semibold text-indigo-400">Odkaz</span>
-          <span class="text-xs text-gray-600">link</span>
+          <span class="text-xs text-gray-400">link</span>
         </div>
-        <code class="cheat-syntax cursor-pointer" title="Klikni pro kopírování" data-copy="[text odkazu](https://url.cz)">[text](https://url.cz)</code>
+        <code class="cheat-syntax cursor-pointer" title="Klikni pro kopírování nebo stiskni Enter" tabindex="0" role="button" aria-label="Kopírovat syntaxi" data-copy="[text odkazu](https://url.cz)">[text](https://url.cz)</code>
         <p class="text-xs text-gray-400 mt-2">Hypertextový odkaz. Do hranatých závorek text, do kulatých URL.</p>
         <div class="mt-3 pt-2 border-t border-gray-800">
-          <p class="text-xs text-gray-600 mb-1">Výsledek:</p>
+          <p class="text-xs text-gray-400 mb-1">Výsledek:</p>
           <a href="#" onclick="return false" class="text-xs text-indigo-400 underline">text odkazu</a>
         </div>
       </div>
 
-      <!-- Inline kód -->
       <div class="cheat-card">
         <div class="flex items-center justify-between mb-2">
           <span class="text-xs font-semibold text-indigo-400">Kód</span>
-          <span class="text-xs text-gray-600">code</span>
+          <span class="text-xs text-gray-400">code</span>
         </div>
-        <code class="cheat-syntax cursor-pointer" title="Klikni pro kopírování" data-copy="`inline kód`&#10;&#10;```&#10;blok kódu&#10;```">`inline` nebo ```blok```</code>
+        <code class="cheat-syntax cursor-pointer" title="Klikni pro kopírování nebo stiskni Enter" tabindex="0" role="button" aria-label="Kopírovat syntaxi" data-copy="`inline kód`&#10;&#10;```&#10;blok kódu&#10;```">`inline` nebo ```blok```</code>
         <p class="text-xs text-gray-400 mt-2">Inline: obal text zpětnými apostrofy. Blok: tři zpětné apostrofy na každé straně.</p>
         <div class="mt-3 pt-2 border-t border-gray-800">
-          <p class="text-xs text-gray-600 mb-1">Výsledek:</p>
+          <p class="text-xs text-gray-400 mb-1">Výsledek:</p>
           <code class="text-xs bg-indigo-950 text-purple-300 px-1.5 py-0.5 rounded border border-indigo-900">inline kód</code>
         </div>
       </div>
 
-      <!-- Tabulka -->
       <div class="cheat-card sm:col-span-2 lg:col-span-4">
         <div class="flex items-center justify-between mb-2">
           <span class="text-xs font-semibold text-indigo-400">Tabulka</span>
-          <span class="text-xs text-gray-600">table</span>
+          <span class="text-xs text-gray-400">table</span>
         </div>
-        <code class="cheat-syntax cursor-pointer text-xs leading-relaxed block w-fit" title="Klikni pro kopírování"
+        <code class="cheat-syntax cursor-pointer text-xs leading-relaxed block w-fit" title="Klikni pro kopírování nebo stiskni Enter" tabindex="0" role="button" aria-label="Kopírovat syntaxi tabulky"
           data-copy="| Sloupec 1 | Sloupec 2 |&#10;|-----------|-----------|&#10;| hodnota   | hodnota   |">
           | Sloupec 1 | Sloupec 2 |<br>
           |-----------|-----------|<br>
@@ -597,7 +670,7 @@
         </code>
         <p class="text-xs text-gray-400 mt-2">Přehledná datová tabulka. Záhlaví odděluje řádek s pomlčkami. Sloupce se oddělují svislítkem <code class="text-purple-400 bg-transparent border-0 p-0">|</code>.</p>
         <div class="mt-3 pt-2 border-t border-gray-800">
-          <p class="text-xs text-gray-600 mb-2">Výsledek:</p>
+          <p class="text-xs text-gray-400 mb-2">Výsledek:</p>
           <table class="text-xs border-collapse">
             <thead>
               <tr>
@@ -615,7 +688,7 @@
         </div>
       </div>
 
-    </div><!-- /cheatsheet-grid -->
+    </div>
   </section>
 
   <!-- ══════════════════════════════════════════ JAVASCRIPT ══════════════════════════════════════════ -->
@@ -623,19 +696,81 @@
 
     // === Marked konfigurace ===
     marked.setOptions({
-      breaks: true,     // \n → <br> v odstavcích
-      gfm: true,        // GitHub Flavored Markdown (tabulky, checklisty…)
+      breaks: true,
+      gfm: true,
     });
 
     // === DOM references ===
     const editor     = document.getElementById('editor');
     const preview    = document.getElementById('preview');
     const filenameEl = document.getElementById('filename');
-    const btnCopy    = document.getElementById('btn-copy');
-    const btnDownload= document.getElementById('btn-download');
-    const btnReset   = document.getElementById('btn-reset');
+    const btnCopy         = document.getElementById('btn-copy');
+    const btnDownload     = document.getElementById('btn-download');
+    const btnExportHtml   = document.getElementById('btn-export-html');
+    const btnClearEditor  = document.getElementById('btn-clear-editor');
+    const btnReset        = document.getElementById('btn-reset');
+    const btnUndo         = document.getElementById('btn-undo');
+    const btnRedo         = document.getElementById('btn-redo');
+    const wordCountEl     = document.getElementById('word-count');
+    const dragOverlay     = document.getElementById('drag-overlay');
 
-    // Výchozí obsah editoru – ukazuje různé prvky Markdownu
+    // === Undo/Redo systém ===
+    const undoStack = [];
+    const redoStack = [];
+    const MAX_HISTORY = 50;
+    let isUndoing = false;
+
+    function saveState() {
+      if (isUndoing) return;
+      undoStack.push({
+        text: editor.value,
+        cursor: editor.selectionStart
+      });
+      if (undoStack.length > MAX_HISTORY) undoStack.shift();
+      redoStack.length = 0; // vyprázdnit redo při nové změně
+      updateUndoRedoButtons();
+    }
+
+    function undo() {
+      if (undoStack.length === 0) return;
+      isUndoing = true;
+      redoStack.push({
+        text: editor.value,
+        cursor: editor.selectionStart
+      });
+      const state = undoStack.pop();
+      editor.value = state.text;
+      editor.setSelectionRange(state.cursor, state.cursor);
+      updatePreview();
+      updateWordCount();
+      saveToSession();
+      isUndoing = false;
+      updateUndoRedoButtons();
+    }
+
+    function redo() {
+      if (redoStack.length === 0) return;
+      isUndoing = true;
+      undoStack.push({
+        text: editor.value,
+        cursor: editor.selectionStart
+      });
+      const state = redoStack.pop();
+      editor.value = state.text;
+      editor.setSelectionRange(state.cursor, state.cursor);
+      updatePreview();
+      updateWordCount();
+      saveToSession();
+      isUndoing = false;
+      updateUndoRedoButtons();
+    }
+
+    function updateUndoRedoButtons() {
+      btnUndo.disabled = undoStack.length === 0;
+      btnRedo.disabled = redoStack.length === 0;
+    }
+
+    // === Výchozí obsah ===
     const DEFAULT_CONTENT = `# Vítej v MD Helper
 
 Toto je **živý náhled** tvého Markdownu. Začni psát vlevo nebo použij tlačítka v toolbaru.
@@ -690,14 +825,17 @@ Více info na [Markdown Guide](https://www.markdownguide.org).
 *Smaž tento obsah a začni psát vlastní poznámky!*
 `;
 
-    // === Toolbar helpers ===
+    // === Word / char count ===
+    function updateWordCount() {
+      const text = editor.value.trim();
+      const words = text ? text.split(/\s+/).length : 0;
+      const chars = editor.value.length;
+      wordCountEl.textContent = `${words} slov, ${chars} znaků`;
+    }
 
-    /**
-     * Vloží markdown syntaxi do editoru na pozici kurzoru.
-     * Pokud je text označen, obalí ho (before + výběr + after).
-     * Pokud není nic označeno, vloží before + placeholder + after.
-     */
+    // === Toolbar helpers ===
     function insertMarkdown(before, after = '', placeholder = '') {
+      saveState();
       const start = editor.selectionStart;
       const end   = editor.selectionEnd;
       const value = editor.value;
@@ -709,7 +847,6 @@ Více info na [Markdown Guide](https://www.markdownguide.org).
 
       editor.value = value.slice(0, start) + inserted + value.slice(end);
 
-      // Nastav kurzor za vložený text nebo do středu
       const cursorPos = selected.length > 0
         ? start + inserted.length
         : start + before.length + placeholder.length;
@@ -717,113 +854,152 @@ Více info na [Markdown Guide](https://www.markdownguide.org).
       editor.focus();
       editor.setSelectionRange(cursorPos, cursorPos);
       updatePreview();
+      updateWordCount();
     }
 
-    /**
-     * Přidá prefix na začátek aktuálního řádku (pro H1, H2).
-     * Pokud prefix již existuje, přepíše ho (toggle).
-     */
     function insertLinePrefix(prefix) {
+      saveState();
       const start = editor.selectionStart;
       const value = editor.value;
 
-      // Najdi začátek aktuálního řádku
       const lineStart = value.lastIndexOf('\n', start - 1) + 1;
       const lineEnd   = value.indexOf('\n', start);
       const line      = value.slice(lineStart, lineEnd === -1 ? undefined : lineEnd);
 
       let newLine;
-      // Toggle: pokud řádek začíná tímto prefixem, odstraň ho
+      let cursorOffset;
+
       if (line.startsWith(prefix)) {
         newLine = line.slice(prefix.length);
+        cursorOffset = 0;
       } else {
-        // Odstraň jiné heading prefixy (# nebo ##) před přidáním nového
         newLine = prefix + line.replace(/^#{1,6}\s*/, '');
+        cursorOffset = prefix.length;
       }
 
       const before = value.slice(0, lineStart);
       const after  = lineEnd === -1 ? '' : value.slice(lineEnd);
       editor.value = before + newLine + after;
 
-      const newCursor = lineStart + prefix.length + (newLine.length - prefix.length);
+      const newCursor = lineStart + cursorOffset;
       editor.focus();
       editor.setSelectionRange(newCursor, newCursor);
       updatePreview();
+      updateWordCount();
     }
 
     // === Toolbar event listeners ===
-    document.querySelectorAll('.toolbar-btn').forEach(btn => {
+    document.querySelectorAll('.toolbar-btn[data-action]').forEach(btn => {
       btn.addEventListener('click', () => {
         const action = btn.dataset.action;
         switch (action) {
-          case 'h1':
-            insertLinePrefix('# ');
-            break;
-          case 'h2':
-            insertLinePrefix('## ');
-            break;
-          case 'bold':
-            insertMarkdown('**', '**', 'tučný text');
-            break;
-          case 'italic':
-            insertMarkdown('_', '_', 'kurzíva');
-            break;
-          case 'bullet':
-            insertMarkdown('- ', '', 'položka');
-            break;
-          case 'numbered':
-            insertMarkdown('1. ', '', 'položka');
-            break;
-          case 'checklist':
-            insertMarkdown('', '', '- [ ] První úkol\n- [x] Hotovo\n');
-            break;
-          case 'link':
-            insertMarkdown('[', '](https://)', 'text odkazu');
-            break;
-          case 'inlinecode':
-            insertMarkdown('`', '`', 'kód');
-            break;
-          case 'codeblock':
-            insertMarkdown('```\n', '\n```', 'kód zde');
-            break;
-          case 'table':
-            insertMarkdown('', '', '| Sloupec 1 | Sloupec 2 | Sloupec 3 |\n|-----------|-----------|----------|\n| hodnota   | hodnota   | hodnota  |\n| hodnota   | hodnota   | hodnota  |\n');
-            break;
+          case 'h1': insertLinePrefix('# '); break;
+          case 'h2': insertLinePrefix('## '); break;
+          case 'h3': insertLinePrefix('### '); break;
+          case 'bold': insertMarkdown('**', '**', 'tučný text'); break;
+          case 'italic': insertMarkdown('_', '_', 'kurzíva'); break;
+          case 'bullet': insertMarkdown('- ', '', 'položka'); break;
+          case 'numbered': insertMarkdown('1. ', '', 'položka'); break;
+          case 'checklist': insertMarkdown('', '', '- [ ] První úkol\n- [x] Hotovo\n'); break;
+          case 'link': insertMarkdown('[', '](https://)', 'text odkazu'); break;
+          case 'inlinecode': insertMarkdown('`', '`', 'kód'); break;
+          case 'codeblock': insertMarkdown('```\n', '\n```', 'kód zde'); break;
+          case 'table': insertMarkdown('', '', '| Sloupec 1 | Sloupec 2 | Sloupec 3 |\n|-----------|-----------|----------|\n| hodnota   | hodnota   | hodnota  |\n| hodnota   | hodnota   | hodnota  |\n'); break;
         }
       });
     });
 
-    // === Live preview ===
+    // Undo/Redo tlačítka
+    btnUndo.addEventListener('click', undo);
+    btnRedo.addEventListener('click', redo);
 
+    // === Keyboard shortcuts ===
+    editor.addEventListener('keydown', (e) => {
+      if (!e.ctrlKey && !e.metaKey) return;
+
+      switch (e.key.toLowerCase()) {
+        case 'z':
+          e.preventDefault();
+          if (e.shiftKey) redo(); else undo();
+          break;
+        case 'y':
+          e.preventDefault();
+          redo();
+          break;
+        case 'b':
+          e.preventDefault();
+          insertMarkdown('**', '**', 'tučný text');
+          break;
+        case 'i':
+          e.preventDefault();
+          insertMarkdown('_', '_', 'kurzíva');
+          break;
+        case 'k':
+          e.preventDefault();
+          insertMarkdown('[', '](https://)', 'text odkazu');
+          break;
+        case '1':
+          e.preventDefault();
+          insertLinePrefix('# ');
+          break;
+        case '2':
+          e.preventDefault();
+          insertLinePrefix('## ');
+          break;
+        case '3':
+          e.preventDefault();
+          insertLinePrefix('### ');
+          break;
+      }
+    });
+
+    // === Live preview ===
     function updatePreview() {
       const raw  = editor.value;
       const html = DOMPurify.sanitize(marked.parse(raw));
       preview.innerHTML = html;
     }
 
-    editor.addEventListener('input', updatePreview);
+    // Debounced auto-save pro undo history (každé 1.5 sekundy nebo při pauze)
+    let inputTimeout;
+    let lastSavedInput = editor.value;
 
-    // === Akce: Copy, Download, Reset ===
+    editor.addEventListener('input', () => {
+      updatePreview();
+      updateWordCount();
 
-    // Copy: zkopíruje obsah do schránky, dočasně změní text tlačítka
+      // Uložit stav pro undo po 1.5s pauze v psaní
+      clearTimeout(inputTimeout);
+      inputTimeout = setTimeout(() => {
+        if (editor.value !== lastSavedInput) {
+          saveState();
+          lastSavedInput = editor.value;
+        }
+      }, 1500);
+    });
+
+    // === Akce: Copy, Download, Export, Clear, Reset ===
+
+    let copyFeedbackTimeout = null;
+
     btnCopy.addEventListener('click', async () => {
+      if (copyFeedbackTimeout !== null) return; // ignorovat rychlé dvojkliky
       try {
         await navigator.clipboard.writeText(editor.value);
-        const original = btnCopy.innerHTML;
         btnCopy.innerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Zkopírováno`;
         btnCopy.style.color = '#86efac';
         btnCopy.style.borderColor = '#166534';
-        setTimeout(() => {
-          btnCopy.innerHTML = original;
+        copyFeedbackTimeout = setTimeout(() => {
+          btnCopy.innerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Kopírovat`;
           btnCopy.style.color = '';
           btnCopy.style.borderColor = '';
+          copyFeedbackTimeout = null;
         }, 1800);
       } catch {
         alert('Kopírování selhalo. Zkus zkopírovat manuálně (Ctrl+A, Ctrl+C).');
       }
     });
 
-    // Download: stáhne obsah jako .md soubor
     btnDownload.addEventListener('click', () => {
       const filename = (filenameEl.value.trim() || 'note').replace(/[^a-zA-Z0-9_\-\.]/g, '_');
       const blob = new Blob([editor.value], { type: 'text/markdown;charset=utf-8' });
@@ -837,35 +1013,157 @@ Více info na [Markdown Guide](https://www.markdownguide.org).
       URL.revokeObjectURL(url);
     });
 
-    // Reset: po potvrzení obnoví výchozí obsah
-    btnReset.addEventListener('click', () => {
-      if (confirm('Opravdu chceš smazat obsah editoru a obnovit výchozí text?')) {
-        editor.value = DEFAULT_CONTENT;
+    btnExportHtml.addEventListener('click', () => {
+      const filename = (filenameEl.value.trim() || 'note').replace(/[^a-zA-Z0-9_\-\.]/g, '_');
+      // Escapování HTML entit pro bezpečné vložení do <title>
+      const safeTitle = filename
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+      const htmlContent = `<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>${safeTitle}</title>
+<style>
+body{font-family:system-ui,-apple-system,sans-serif;max-width:800px;margin:2rem auto;padding:0 1rem;line-height:1.7;color:#333}
+h1,h2,h3,h4,h5,h6{margin-top:1.5rem;margin-bottom:.75rem}
+code{background:#f4f4f4;padding:.15em .4em;border-radius:4px;font-family:monospace}
+pre{background:#f4f4f4;padding:1rem;border-radius:8px;overflow-x:auto}
+pre code{background:none;padding:0}
+blockquote{border-left:4px solid #6366f1;padding-left:1rem;margin-left:0;color:#666}
+table{border-collapse:collapse;width:100%;margin:1rem 0}
+th,td{border:1px solid #ddd;padding:.5rem;text-align:left}
+th{background:#f8f8f8}
+a{color:#6366f1}
+</style>
+</head>
+<body>
+${DOMPurify.sanitize(marked.parse(editor.value))}
+</body>
+</html>`;
+      const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
+      const url  = URL.createObjectURL(blob);
+      const a    = document.createElement('a');
+      a.href     = url;
+      a.download = filename + '.html';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    });
+
+    btnClearEditor.addEventListener('click', () => {
+      if (confirm('Opravdu chceš smazat celý obsah editoru?')) {
+        saveState();
+        editor.value = '';
         updatePreview();
+        updateWordCount();
+        saveToSession();
         editor.focus();
       }
     });
 
-    // Klik na syntax v cheat sheetu → zkopíruje do schránky
+    btnReset.addEventListener('click', () => {
+      if (confirm('Opravdu chceš smazat obsah editoru a obnovit výchozí text?')) {
+        saveState();
+        editor.value = DEFAULT_CONTENT;
+        updatePreview();
+        updateWordCount();
+        saveToSession();
+        editor.focus();
+      }
+    });
+
+    // === Drag & Drop .md souborů ===
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+      document.body.addEventListener(eventName, preventDefaults, false);
+    });
+
+    function preventDefaults(e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+
+    document.body.addEventListener('dragenter', () => dragOverlay.classList.add('active'));
+    document.body.addEventListener('dragleave', (e) => {
+      if (e.relatedTarget === null) dragOverlay.classList.remove('active');
+    });
+    document.body.addEventListener('drop', (e) => {
+      dragOverlay.classList.remove('active');
+      const files = e.dataTransfer.files;
+      if (files.length === 0) return;
+      const file = files[0];
+      if (!file.name.endsWith('.md')) {
+        alert('Prosím, přetáhni pouze soubor s příponou .md');
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        saveState();
+        editor.value = event.target.result;
+        filenameEl.value = file.name.replace(/\.md$/, '');
+        updatePreview();
+        updateWordCount();
+        saveToSession();
+      };
+      reader.readAsText(file);
+    });
+
+    // === Auto-save do sessionStorage ===
+    const SESSION_KEY = 'md-helper-content';
+    const SESSION_FILENAME_KEY = 'md-helper-filename';
+
+    function loadFromSession() {
+      const saved = sessionStorage.getItem(SESSION_KEY);
+      if (saved !== null) {
+        editor.value = saved;
+      } else {
+        editor.value = DEFAULT_CONTENT;
+      }
+      const savedFilename = sessionStorage.getItem(SESSION_FILENAME_KEY);
+      if (savedFilename) filenameEl.value = savedFilename;
+    }
+
+    function saveToSession() {
+      sessionStorage.setItem(SESSION_KEY, editor.value);
+      sessionStorage.setItem(SESSION_FILENAME_KEY, filenameEl.value);
+    }
+
+    editor.addEventListener('input', saveToSession);
+    filenameEl.addEventListener('input', saveToSession);
+
+    // === Cheat sheet copy ===
+    async function copyCheatSyntax(el) {
+      const text = el.dataset.copy.replace(/&#10;/g, '\n');
+      try {
+        await navigator.clipboard.writeText(text);
+        const orig = el.style.borderColor;
+        el.style.borderColor = '#4f46e5';
+        el.style.background  = '#1e1b4b';
+        setTimeout(() => {
+          el.style.borderColor = orig;
+          el.style.background  = '';
+        }, 800);
+      } catch { /* tiché selhání */ }
+    }
+
     document.querySelectorAll('.cheat-syntax[data-copy]').forEach(el => {
-      el.addEventListener('click', async () => {
-        const text = el.dataset.copy.replace(/&#10;/g, '\n');
-        try {
-          await navigator.clipboard.writeText(text);
-          const orig = el.style.borderColor;
-          el.style.borderColor = '#4f46e5';
-          el.style.background  = '#1e1b4b';
-          setTimeout(() => {
-            el.style.borderColor = orig;
-            el.style.background  = '';
-          }, 800);
-        } catch { /* tiché selhání */ }
+      el.addEventListener('click', () => copyCheatSyntax(el));
+      el.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          copyCheatSyntax(el);
+        }
       });
     });
 
     // === Init ===
-    editor.value = DEFAULT_CONTENT;
+    loadFromSession();
     updatePreview();
+    updateWordCount();
 
   </script>
 
